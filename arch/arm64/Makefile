@@ -55,6 +55,12 @@ KBUILD_CFLAGS	+= -fno-asynchronous-unwind-tables
 KBUILD_CFLAGS	+= $(call cc-disable-warning, psabi)
 KBUILD_AFLAGS	+= $(lseinstr) $(brokengasinst) $(compat_vdso)
 
+ifeq ($(CONFIG_ARCH_SDM660), y)
+ifeq ($(cc-name),clang)
+KBUILD_CFLAGS  += -mcpu=cortex-a53 -mtune=cortex-a53
+endif
+endif
+
 KBUILD_CFLAGS	+= $(call cc-option,-mabi=lp64)
 KBUILD_AFLAGS	+= $(call cc-option,-mabi=lp64)
 
