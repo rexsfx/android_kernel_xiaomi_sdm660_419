@@ -151,10 +151,6 @@
  *	Copy all security options from a given superblock to another
  *	@oldsb old superblock which contain information to clone
  *	@newsb new superblock which needs filled in
- * @sb_parse_opts_str:
- *	Parse a string of security data filling in the opts structure
- *	@options string containing all mount options known by the LSM
- *	@opts binary data structure usable by the LSM
  * @dentry_init_security:
  *	Compute a context for a dentry as the inode is not yet available
  *	since NFSv4 has no label backed by an EA anyway.
