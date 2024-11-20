@@ -347,6 +347,23 @@ static void show_vma_header_prefix(struct seq_file *m,
 	seq_putc(m, ' ');
 }
 
+static void show_vma_header_prefix_fake(struct seq_file *m,
+				   unsigned long start, unsigned long end,
+				   vm_flags_t flags, unsigned long long pgoff,
+				   dev_t dev, unsigned long ino)
+{
+	seq_setwidth(m, 25 + sizeof(void *) * 6 - 1);
+	seq_printf(m, "%08lx-%08lx %c%c%c%c %08llx %02x:%02x %lu ",
+		   start,
+		   end,
+		   flags & VM_READ ? 'r' : '-',
+		   flags & VM_WRITE ? '-' : '-',
+		   flags & VM_EXEC ? '-' : '-',
+		   flags & VM_MAYSHARE ? 's' : 'p',
+		   pgoff,
+		   MAJOR(dev), MINOR(dev), ino);
+}
+
 static void
 show_map_vma(struct seq_file *m, struct vm_area_struct *vma)
 {
@@ -364,12 +381,32 @@ show_map_vma(struct seq_file *m, struct vm_area_struct *vma)
 		dev = inode->i_sb->s_dev;
 		ino = inode->i_ino;
 		pgoff = ((loff_t)vma->vm_pgoff) << PAGE_SHIFT;
+		char *path = kmalloc(PATH_MAX, GFP_KERNEL);
+		if (!path)
+			return;
+
+		char *tmp = d_path(&file->f_path, path, PATH_MAX);
+		if (IS_ERR(tmp)) {
+			kfree(path);
+			return;
+		}
+
+		bool lineage = strstr(tmp, "lineage");
+		kfree(path);
+		if (lineage) {
+			start = vma->vm_start;
+			end = vma->vm_end;
+			show_vma_header_prefix_fake(m, start, end, flags, pgoff, dev, ino);
+			name = "/system/framework/framework-res.apk";
+			goto done;
+		}
 	}
 
 	start = vma->vm_start;
 	end = vma->vm_end;
 	show_vma_header_prefix(m, start, end, flags, pgoff, dev, ino);
 
+bypass:
 	/*
 	 * Print the dentry name for named mappings, and a
 	 * special [heap] marker for the heap:
